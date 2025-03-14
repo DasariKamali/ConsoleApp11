@@ -17,3 +17,15 @@ steps:
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
+
+- task: AzureFileCopy@6
+  displayName: 'Copy files to Azure Blob Storage'
+  inputs:
+    SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    azureSubscription: 'Nova' # Your service connection
+    Destination: 'AzureBlob'
+    storage: 'kamdevopsstr' # Storage account name
+    ContainerName: 'kamcontainer'
+    AdditionalArguments: '--log-level=DEBUG' # For detailed logs
+    enableCopyPrerequisites: true
+
