@@ -4,29 +4,39 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+  - main
 
 pool:
   name: SelfHostedPool
 
-# Checkout the GitHub repo
 steps:
-- checkout: self
-
-# Confirm the files from GitHub repo
+# Step 1: Generate .zip file (if not already created)
 - script: |
-    echo "Checking files from GitHub repo:"
-    ls -R $(Build.SourcesDirectory)
-  displayName: 'List repo files'
+    echo "Creating zip file..."
+    zip -r $(Build.ArtifactStagingDirectory)/myArtifact.zip $(Build.SourcesDirectory)/build-output/
+  displayName: 'Create .zip file'
 
-# Upload files from GitHub repo to Azure Blob Storage
-- task: AzureFileCopy@6
-  displayName: 'Copy files from GitHub repo to Azure Blob Storage'
+# Step 2: Copy files to the artifact staging directory (if needed)
+- task: CopyFiles@2
   inputs:
-    SourcePath: '$(Build.SourcesDirectory)/*' # All files from the GitHub repo
-    azureSubscription: 'Nova' # Service connection name
-    Destination: 'AzureBlob'
-    storage: 'kamdevopsstr' # Storage account name
-    ContainerName: 'kamcontainer' # Container name
-    AdditionalArguments: '--log-level=DEBUG' # For detailed logs
-    enableCopyPrerequisites: true
+    sourceFolder: '$(Build.SourcesDirectory)'  # Adjust this path based on where your files are located
+    targetFolder: '$(Build.ArtifactStagingDirectory)'  # Destination folder for the artifacts
+
+# Step 3: Optionally publish the build artifacts (optional but good practice)
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'  # Path to your staged artifacts
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
+# Step 4: Upload .zip file(s) to Azure Blob Storage
+- task: AzureFileCopy@6
+  displayName: 'Upload Artifact to Azure Blob'
+  inputs:
+    SourcePath: '$(Build.ArtifactStagingDirectory)/*.zip'  # Path to your .zip file(s)
+    azureSubscription: 'Nova'  # Azure service connection
+    Destination: 'AzureBlob'  # Destination type
+    storage: 'kamdevopsstr'  # Storage account name
+    ContainerName: 'kamcontainer'  # Blob container name
+    AdditionalArguments: '--log-level=DEBUG'  # Optional: Enables debug logging
