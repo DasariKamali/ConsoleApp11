@@ -10,61 +10,49 @@ pool:
   name: SelfHostedPool
 
 steps:
-# Step 1: Checkout code from GitHub
-- checkout: self
-  displayName: 'Checkout code'
-
-# Step 2: Install .NET SDK (ensure you're using the correct version)
+# Step 1: Install .NET 8 SDK (if not already installed)
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
-    version: '6.x'  # Adjust to the version of .NET your project uses
+    version: '8.x'
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
-# Step 3: Restore the NuGet packages
+# Step 2: Restore .NET dependencies
 - task: DotNetCoreCLI@2
+  displayName: 'Restore dependencies'
   inputs:
     command: 'restore'
-    projects: '**/*.csproj'
+    projects: '$(Build.SourcesDirectory)/ConsoleApp11/ConsoleApp11.csproj'
 
-# Step 4: Build the project
+# Step 3: Build the project
 - task: DotNetCoreCLI@2
+  displayName: 'Build project'
   inputs:
     command: 'build'
-    projects: '**/*.csproj'
-    arguments: '--configuration Release'
+    projects: '$(Build.SourcesDirectory)/ConsoleApp11/ConsoleApp11.csproj'
 
-# Step 5: Publish the project
+# Step 4: Publish the .NET project
 - task: DotNetCoreCLI@2
+  displayName: 'Publish project'
   inputs:
     command: 'publish'
-    projects: '**/*.csproj'
+    projects: '$(Build.SourcesDirectory)/ConsoleApp11/ConsoleApp11.csproj'
     publishWebProjects: false
-    zipAfterPublish: true
     arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/publish'
 
-# Step 6: Ensure the 'build-output' directory exists (or create it)
-- script: |
-    echo "Checking if build-output directory exists..."
-    if (!(Test-Path "$(Build.ArtifactStagingDirectory)/build-output")) {
-        echo "Directory does not exist. Creating it now..."
-        New-Item -ItemType Directory -Force -Path "$(Build.ArtifactStagingDirectory)/build-output"
-    }
-  displayName: 'Ensure build-output directory exists'
-
-# Step 7: Copy files to the artifact staging directory (if needed)
-- task: CopyFiles@2
-  inputs:
-    sourceFolder: '$(Build.ArtifactStagingDirectory)/publish'  # Adjust based on your project output
-    targetFolder: '$(Build.ArtifactStagingDirectory)/build-output'  # Destination folder for the artifacts
-
-# Step 8: Create .zip file (using PowerShell on Windows agent)
+# Step 5: Generate .zip file (if not already created)
 - script: |
     echo "Creating zip file..."
-    powershell -Command "Compress-Archive -Path $(Build.ArtifactStagingDirectory)/build-output/* -DestinationPath $(Build.ArtifactStagingDirectory)/myArtifact.zip"
+    zip -r $(Build.ArtifactStagingDirectory)/myArtifact.zip $(Build.ArtifactStagingDirectory)/publish/
   displayName: 'Create .zip file'
 
-# Step 9: Publish build artifacts
+# Step 6: Copy files to the artifact staging directory (if needed)
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)'  # Adjust this path based on where your files are located
+    targetFolder: '$(Build.ArtifactStagingDirectory)'  # Destination folder for the artifacts
+
+# Step 7: Optionally publish the build artifacts (optional but good practice)
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
   inputs:
@@ -72,7 +60,7 @@ steps:
     ArtifactName: 'drop'
     publishLocation: 'Container'
 
-# Step 10: Upload .zip file(s) to Azure Blob Storage
+# Step 8: Upload .zip file(s) to Azure Blob Storage
 - task: AzureFileCopy@6
   displayName: 'Upload Artifact to Azure Blob'
   inputs:
