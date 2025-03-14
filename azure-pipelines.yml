@@ -40,11 +40,13 @@ steps:
     publishWebProjects: false
     arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/publish'
 
-# Step 5: Generate .zip file (if not already created)
-- script: |
-    echo "Creating zip file..."
-    zip -r $(Build.ArtifactStagingDirectory)/myArtifact.zip $(Build.ArtifactStagingDirectory)/publish/
-  displayName: 'Create .zip file'
+# Step 5: Generate .zip file using PowerShell (for Windows)
+- powershell: |
+    Write-Host "Creating zip file..."
+    $publishFolder = "$(Build.ArtifactStagingDirectory)/publish"
+    $zipFile = "$(Build.ArtifactStagingDirectory)/myArtifact.zip"
+    Compress-Archive -Path $publishFolder\* -DestinationPath $zipFile
+  displayName: 'Create .zip file using PowerShell'
 
 # Step 6: Copy files to the artifact staging directory (if needed)
 - task: CopyFiles@2
