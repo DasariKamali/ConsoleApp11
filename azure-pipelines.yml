@@ -10,19 +10,30 @@ pool:
   name: SelfHostedPool
 
 steps:
-# Step 1: Generate .zip file (using PowerShell on Windows agent)
+# Step 1: List the contents of the build-output directory (for debugging)
 - script: |
-    echo "Creating zip file..."
-    powershell -Command "Compress-Archive -Path $(Build.SourcesDirectory)\build-output\* -DestinationPath $(Build.ArtifactStagingDirectory)\myArtifact.zip"
+    echo "Listing contents of build-output directory..."
+    dir $(Build.SourcesDirectory)\build-output
+  displayName: 'List files in build-output directory'
+
+# Step 2: Generate .zip file (using PowerShell on Windows agent) with path existence check
+- script: |
+    if (Test-Path "$(Build.SourcesDirectory)\build-output") {
+      echo "Creating zip file..."
+      powershell -Command "Compress-Archive -Path $(Build.SourcesDirectory)\build-output\* -DestinationPath $(Build.ArtifactStagingDirectory)\myArtifact.zip"
+    } else {
+      echo "Directory 'build-output' does not exist."
+      exit 1
+    }
   displayName: 'Create .zip file'
 
-# Step 2: Copy files to the artifact staging directory (if needed)
+# Step 3: Copy files to the artifact staging directory (if needed)
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)'  # Adjust this path based on where your files are located
     targetFolder: '$(Build.ArtifactStagingDirectory)'  # Destination folder for the artifacts
 
-# Step 3: Optionally publish the build artifacts (optional but good practice)
+# Step 4: Optionally publish the build artifacts (optional but good practice)
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
   inputs:
@@ -30,7 +41,7 @@ steps:
     ArtifactName: 'drop'
     publishLocation: 'Container'
 
-# Step 4: Upload .zip file(s) to Azure Blob Storage
+# Step 5: Upload .zip file(s) to Azure Blob Storage
 - task: AzureFileCopy@6
   displayName: 'Upload Artifact to Azure Blob'
   inputs:
