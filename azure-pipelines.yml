@@ -9,23 +9,24 @@ trigger:
 pool:
   name: SelfHostedPool
 
+# Checkout the GitHub repo
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- checkout: self
 
+# Confirm the files from GitHub repo
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    echo "Checking files from GitHub repo:"
+    ls -R $(Build.SourcesDirectory)
+  displayName: 'List repo files'
 
+# Upload files from GitHub repo to Azure Blob Storage
 - task: AzureFileCopy@6
-  displayName: 'Copy files to Azure Blob Storage'
+  displayName: 'Copy files from GitHub repo to Azure Blob Storage'
   inputs:
-    SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-    azureSubscription: 'Nova' # Your service connection
+    SourcePath: '$(Build.SourcesDirectory)/*' # All files from the GitHub repo
+    azureSubscription: 'Nova' # Service connection name
     Destination: 'AzureBlob'
     storage: 'kamdevopsstr' # Storage account name
-    ContainerName: 'kamcontainer'
+    ContainerName: 'kamcontainer' # Container name
     AdditionalArguments: '--log-level=DEBUG' # For detailed logs
     enableCopyPrerequisites: true
-
