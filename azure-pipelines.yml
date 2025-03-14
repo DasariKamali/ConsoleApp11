@@ -10,10 +10,10 @@ pool:
   name: SelfHostedPool
 
 steps:
-# Step 1: Generate .zip file (if not already created)
+# Step 1: Generate .zip file (using PowerShell on Windows agent)
 - script: |
     echo "Creating zip file..."
-    zip -r $(Build.ArtifactStagingDirectory)/myArtifact.zip $(Build.SourcesDirectory)/build-output/
+    powershell -Command "Compress-Archive -Path $(Build.SourcesDirectory)\build-output\* -DestinationPath $(Build.ArtifactStagingDirectory)\myArtifact.zip"
   displayName: 'Create .zip file'
 
 # Step 2: Copy files to the artifact staging directory (if needed)
