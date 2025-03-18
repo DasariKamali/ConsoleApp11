@@ -7,7 +7,7 @@ trigger:
   - main
 
 pool:
-  name: SelfHostedPool
+  name: Filecopy
 
 steps:
 # Step 1: Install .NET 8 SDK (if not already installed)
