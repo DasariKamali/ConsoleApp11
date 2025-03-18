@@ -66,9 +66,8 @@ steps:
 - task: AzureFileCopy@6
   displayName: 'Upload Artifact to Azure Blob'
   inputs:
-    SourcePath: '$(Build.ArtifactStagingDirectory)/*.zip'  # Path to your .zip file(s)
-    azureSubscription: 'Nova'  # Azure service connection
-    Destination: 'AzureBlob'  # Destination type
-    storage: 'kamdevopsstr'  # Storage account name
-    ContainerName: 'kamcontainer'  # Blob container name
-    AdditionalArguments: '--log-level=DEBUG'  # Optional: Enables debug logging
+    SourcePath: '$(Build.ArtifactStagingDirectory)/*.zip'  
+    azureSubscription: 'Devops-service-con' 
+    Destination: 'AzureBlob'  
+    storage: 'teststorageaccten'  
+    ContainerName: 'venkattest'
